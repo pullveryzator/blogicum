@@ -1,6 +1,5 @@
 from django.db import models
 from django.contrib.auth import get_user_model
-from django.urls import reverse
 
 from core.models import PublishedCreatedModel
 
@@ -43,15 +42,12 @@ class Post(PublishedCreatedModel):
     image = models.ImageField(
         'Фото',
         blank=True,
-        upload_to='avatars',
+        upload_to='images',
     )
 
     class Meta:
         verbose_name = 'публикация'
         verbose_name_plural = 'Публикации'
-
-    def get_absolute_url(self):
-        return reverse('post:detail', kwargs={'pk': self.pk})
 
     def __str__(self):
         return self.title
@@ -95,24 +91,17 @@ class Location(PublishedCreatedModel):
         return self.name
 
 
-class Profile(models.Model):
-    user = models.OneToOneField(User, null=True, on_delete=models.CASCADE)
-    avatar = models.ImageField(null=True, blank=True, upload_to="media/profile/")
-
-    def __str__(self):
-        return str(self.user)
-
-
 class Comment(models.Model):
     post = models.ForeignKey(
         Post,
         on_delete=models.CASCADE,
-        related_name='post',
+        related_name='comments',
+        verbose_name='Пост'
         )
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        verbose_name='Автор публикации'
+        verbose_name='Автор'
         )
     text = models.TextField(
         verbose_name='Комментарий'
@@ -124,3 +113,8 @@ class Comment(models.Model):
 
     class Meta:
         ordering = ('created_at',)
+        verbose_name = 'Комментарий'
+        verbose_name_plural = 'Комментарии'
+
+    def __str__(self):
+        return str(self.post)

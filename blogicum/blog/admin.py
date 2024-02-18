@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Post, Category, Location
+from .models import Post, Category, Location, Comment
 
 
 class PostAdmin(admin.ModelAdmin):
@@ -72,9 +72,26 @@ class LocationAdmin(admin.ModelAdmin):
     )
 
 
+class CommentAdmin(admin.ModelAdmin):
+    list_display = (
+        'post',
+        'author',
+        'created_at',
+    )
+
+    list_per_page = 15
+    search_fields = (
+        'post',
+        'author',
+    )
+    list_display_links = (
+        'post',
+    )
+
 admin.site.empty_value_display = 'Не задано'
 admin.site.site_header = 'Управление проектом "Блогикум"'
 admin.site.site_title = 'Блогикум'
 admin.site.register(Category, CategoryAdmin)
 admin.site.register(Location, LocationAdmin)
 admin.site.register(Post, PostAdmin)
+admin.site.register(Comment, CommentAdmin)

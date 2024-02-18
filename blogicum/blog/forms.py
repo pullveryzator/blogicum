@@ -1,10 +1,10 @@
 from django import forms
 
-from django.core.exceptions import ValidationError
-
-from django.core.mail import send_mail
+from django.contrib.auth import get_user_model
 
 from .models import Post, Comment
+
+User = get_user_model()
 
 
 class PostForm(forms.ModelForm):
@@ -12,7 +12,7 @@ class PostForm(forms.ModelForm):
     class Meta:
         model = Post
         exclude = ('author',)
-        widgets = {'post': forms.DateInput(attrs={'type': 'date'})}
+        widgets = {'pub_date': forms.DateInput(attrs={'type': 'date'})}
 
     def clean_first_name(self):
         first_name = self.cleaned_data['first_name']
@@ -24,3 +24,10 @@ class CommentForm(forms.ModelForm):
     class Meta:
         model = Comment
         fields = ('text',)
+
+
+class ProfileForm(forms.ModelForm):
+
+    class Meta:
+        model = User
+        fields = ("username", "email", "first_name", "last_name",)
