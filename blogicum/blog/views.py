@@ -1,18 +1,17 @@
-from django.views.generic import (
-    CreateView, DeleteView,
-    DetailView, ListView,
-    UpdateView
-    )
+from django.views.generic import (CreateView,
+                                  DeleteView,
+                                  DetailView,
+                                  ListView,
+                                  UpdateView)
 
 from django.db.models import Count
+
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth import get_user_model
 from django.urls import reverse
-from django.shortcuts import (
-    render,
-    redirect,
-    get_object_or_404
-    )
+from django.shortcuts import (render,
+                              redirect,
+                              get_object_or_404)
 from django.utils import timezone
 from django.core.paginator import Paginator
 
@@ -52,10 +51,11 @@ def profile(request, username):
     profile = get_object_or_404(User, username=username)
     if request.user.is_authenticated and request.user.username == username:
         posts = Post.objects.select_related(
-                'author').filter(
+            'author').filter(
                 author__username=username).order_by(
                     '-pub_date').annotate(
-                        comment_count=Count('comments'))
+                        comment_count=Count('comments')
+        )
     else:
         posts = Post.objects.select_related(
             'author').filter(
@@ -64,7 +64,8 @@ def profile(request, username):
                 category__is_published=True,
                 author__username=username).order_by(
                     '-pub_date').annotate(
-                        comment_count=Count('comments'))
+                        comment_count=Count('comments')
+        )
     paginator = Paginator(posts, POSTS_PER_PAGE)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -117,11 +118,11 @@ class PostListView(ListView):
     paginate_by = POSTS_PER_PAGE
     queryset = Post.objects.select_related(
         'category').filter(
-                is_published=True,
-                pub_date__lte=current_datetime,
-                category__is_published=True).annotate(
-                    comment_count=Count('comments')
-        )
+            is_published=True,
+            pub_date__lte=current_datetime,
+            category__is_published=True).annotate(
+                comment_count=Count('comments')
+    )
 
 
 class PostCreateView(LoginRequiredMixin, CreateView):

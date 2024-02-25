@@ -88,6 +88,7 @@ class CommentAdmin(admin.ModelAdmin):
         'post',
     )
 
+
 admin.site.empty_value_display = 'Не задано'
 admin.site.site_header = 'Управление проектом "Блогикум"'
 admin.site.site_title = 'Блогикум'

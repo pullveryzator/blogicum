@@ -101,19 +101,19 @@ class Comment(models.Model):
         on_delete=models.CASCADE,
         related_name='comments',
         verbose_name='Пост'
-        )
+    )
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         verbose_name='Автор'
-        )
+    )
     text = models.TextField(
         verbose_name='Комментарий'
-        )
+    )
     created_at = models.DateTimeField(
         auto_now_add=True,
         verbose_name='Добавлено'
-        )
+    )
 
     class Meta:
         ordering = ('created_at',)
