@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model
+from django.urls import reverse
 
 from core.models import PublishedCreatedModel
 
@@ -51,6 +52,9 @@ class Post(PublishedCreatedModel):
 
     def __str__(self):
         return self.title
+
+    def get_absolute_url(self):
+        return reverse('blog:post_detail', kwargs={'post_id': self.pk})
 
 
 class Category(PublishedCreatedModel):
