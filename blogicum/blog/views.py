@@ -1,8 +1,8 @@
-from django.http import Http404
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator
 from django.db.models import Count
+from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -23,6 +23,10 @@ def paginate(queryset, request):
     return page_obj
 
 
+def annotation(queryset):
+    return queryset.annotate(comment_count=Count('comments'))
+
+
 class SuccessUrlToProfileMixin():
     def get_success_url(self):
         return reverse('blog:profile',
@@ -37,19 +41,33 @@ class SuccessUrlToPostMixin():
                        )
 
 
-class PostRequireAttrsMixin():
+class PostRequiredAttrsMixin():
     model = Post
     template_name = 'blog/create.html'
     pk_url_kwarg = 'post_id'
 
 
-class CommentRequireAttrsMixin():
+class PostFormValidMixin():
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        return super().form_valid(form)
+
+
+class PostFormMixin():
+    form_class = PostForm
+
+
+class CommentFormMixin():
+    form_class = CommentForm
+
+
+class CommentRequiredAttrsMixin():
     model = Comment
     template_name = 'blog/comment.html'
     pk_url_kwarg = 'post_id'
 
 
-class PostUpdateDeleteMixin(LoginRequiredMixin, PostRequireAttrsMixin):
+class PostUpdateDeleteMixin(LoginRequiredMixin, PostRequiredAttrsMixin):
 
     def dispatch(self, request, *args, **kwargs):
         instance = get_object_or_404(Post, pk=kwargs['post_id'])
@@ -59,7 +77,7 @@ class PostUpdateDeleteMixin(LoginRequiredMixin, PostRequireAttrsMixin):
 
 
 class CommentUpdateDeleteMixin(LoginRequiredMixin,
-                               CommentRequireAttrsMixin,
+                               CommentRequiredAttrsMixin,
                                SuccessUrlToPostMixin):
 
     def get_object(self):
@@ -72,23 +90,19 @@ class CommentUpdateDeleteMixin(LoginRequiredMixin,
 
 def get_posts_qs_by_category():
     current_datetime = timezone.now()
-    return Post.objects.select_related(
+    return annotation(Post.objects.select_related(
         'category').filter(
             is_published=True,
             pub_date__lte=current_datetime,
             category__is_published=True).order_by(
-                '-pub_date').annotate(
-                comment_count=Count('comments')
-    )
+                '-pub_date'))
 
 
 def get_posts_gs_by_author(username):
-    return Post.objects.select_related(
+    return annotation(Post.objects.select_related(
         'author').filter(
             author__username=username).order_by(
-                '-pub_date').annotate(
-                    comment_count=Count('comments')
-    )
+                '-pub_date'))
 
 
 def category_posts(request, category_slug):
@@ -117,17 +131,14 @@ def profile(request, username):
     return render(request, template, context)
 
 
-class ProfileUpdateView(LoginRequiredMixin, UpdateView):
+class ProfileUpdateView(LoginRequiredMixin,
+                        SuccessUrlToProfileMixin,
+                        UpdateView):
     form_class = ProfileForm
     template_name = 'blog/user.html'
 
     def get_object(self):
         return self.request.user
-
-    def get_success_url(self):
-        return reverse('blog:profile',
-                       kwargs={'username': self.request.user}
-                       )
 
 
 class PostDetailView(DetailView):
@@ -163,17 +174,17 @@ class PostListView(ListView):
 
 class PostCreateView(LoginRequiredMixin,
                      SuccessUrlToProfileMixin,
-                     PostRequireAttrsMixin,
+                     PostRequiredAttrsMixin,
+                     PostFormValidMixin,
+                     PostFormMixin,
                      CreateView):
-    form_class = PostForm
-
-    def form_valid(self, form):
-        form.instance.author = self.request.user
-        return super().form_valid(form)
+    pass
 
 
-class PostUpdateView(PostUpdateDeleteMixin, UpdateView):
-    form_class = PostForm
+class PostUpdateView(PostUpdateDeleteMixin,
+                     PostFormMixin,
+                     UpdateView):
+    pass
 
 
 class PostDeleteView(PostUpdateDeleteMixin,
@@ -184,22 +195,25 @@ class PostDeleteView(PostUpdateDeleteMixin,
 
 class CommentCreateView(LoginRequiredMixin,
                         SuccessUrlToPostMixin,
-                        CommentRequireAttrsMixin,
+                        CommentRequiredAttrsMixin,
+                        PostFormValidMixin,
+                        CommentFormMixin,
                         CreateView):
-    form_class = CommentForm
+    pass
 
     def dispatch(self, request, *args, **kwargs):
         self.current_post = get_object_or_404(Post, pk=kwargs['post_id'])
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
-        form.instance.author = self.request.user
         form.instance.post = self.current_post
         return super().form_valid(form)
 
 
-class CommentUpdateView(CommentUpdateDeleteMixin, UpdateView):
-    form_class = CommentForm
+class CommentUpdateView(CommentUpdateDeleteMixin,
+                        CommentFormMixin,
+                        UpdateView):
+    pass
 
 
 class CommentDeleteView(CommentUpdateDeleteMixin, DeleteView):
