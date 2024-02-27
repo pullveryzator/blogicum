@@ -3,106 +3,55 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.paginator import Paginator
 from django.db.models import Count
 from django.http import Http404
-from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse
+from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 from django.views.generic import (CreateView, DeleteView, DetailView, ListView,
                                   UpdateView)
 
-from blog.models import Category, Comment, Post
-from .forms import CommentForm, PostForm, ProfileForm
+from blog.models import Category, Post
+from .mixins import (SuccessUrlToPostMixin,
+                     SuccessUrlToProfileMixin,
+                     PostFormMixin,
+                     PostFormValidMixin,
+                     PostRequiredAttrsMixin,
+                     PostUpdateDeleteMixin,
+                     CommentFormMixin,
+                     CommentRequiredAttrsMixin,
+                     CommentUpdateDeleteMixin)
+from .forms import CommentForm, ProfileForm
 
 POSTS_PER_PAGE = 10
 User = get_user_model()
 
 
 def paginate(queryset, request):
+    '''Returns a page object.'''
+
     paginator = Paginator(queryset, POSTS_PER_PAGE)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     return page_obj
 
 
-def annotation(queryset):
-    return queryset.annotate(comment_count=Count('comments'))
+def annotate_comment_count(queryset):
+    '''Adds annotations about the number of comments to the post.'''
 
-
-class SuccessUrlToProfileMixin():
-    def get_success_url(self):
-        return reverse('blog:profile',
-                       kwargs={'username': self.request.user}
-                       )
-
-
-class SuccessUrlToPostMixin():
-    def get_success_url(self):
-        return reverse('blog:post_detail',
-                       kwargs={'post_id': self.kwargs['post_id']}
-                       )
-
-
-class PostRequiredAttrsMixin():
-    model = Post
-    template_name = 'blog/create.html'
-    pk_url_kwarg = 'post_id'
-
-
-class PostFormValidMixin():
-    def form_valid(self, form):
-        form.instance.author = self.request.user
-        return super().form_valid(form)
-
-
-class PostFormMixin():
-    form_class = PostForm
-
-
-class CommentFormMixin():
-    form_class = CommentForm
-
-
-class CommentRequiredAttrsMixin():
-    model = Comment
-    template_name = 'blog/comment.html'
-    pk_url_kwarg = 'post_id'
-
-
-class PostUpdateDeleteMixin(LoginRequiredMixin, PostRequiredAttrsMixin):
-
-    def dispatch(self, request, *args, **kwargs):
-        instance = get_object_or_404(Post, pk=kwargs['post_id'])
-        if instance.author != request.user:
-            return redirect('blog:post_detail', kwargs['post_id'])
-        return super().dispatch(request, *args, **kwargs)
-
-
-class CommentUpdateDeleteMixin(LoginRequiredMixin,
-                               CommentRequiredAttrsMixin,
-                               SuccessUrlToPostMixin):
-
-    def get_object(self):
-        return get_object_or_404(
-            Comment,
-            author=self.request.user,
-            post_id=self.kwargs['post_id'],
-            id=self.kwargs['comment_id'])
+    return queryset.annotate(comment_count=Count('comments')).order_by(
+                '-pub_date')
 
 
 def get_posts_qs_by_category():
-    current_datetime = timezone.now()
-    return annotation(Post.objects.select_related(
+    return annotate_comment_count(Post.objects.select_related(
         'category').filter(
             is_published=True,
-            pub_date__lte=current_datetime,
-            category__is_published=True).order_by(
-                '-pub_date'))
+            pub_date__lte=timezone.now(),
+            category__is_published=True))
 
 
 def get_posts_gs_by_author(username):
-    return annotation(Post.objects.select_related(
+    return annotate_comment_count(Post.objects.select_related(
         'author').filter(
-            author__username=username).order_by(
-                '-pub_date'))
+            author__username=username))
 
 
 def category_posts(request, category_slug):
@@ -199,7 +148,6 @@ class CommentCreateView(LoginRequiredMixin,
                         PostFormValidMixin,
                         CommentFormMixin,
                         CreateView):
-    pass
 
     def dispatch(self, request, *args, **kwargs):
         self.current_post = get_object_or_404(Post, pk=kwargs['post_id'])
