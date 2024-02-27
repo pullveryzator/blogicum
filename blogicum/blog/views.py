@@ -25,8 +25,7 @@ User = get_user_model()
 
 
 def paginate(queryset, request):
-    '''Returns a page object.'''
-
+    """Returns a page object."""
     paginator = Paginator(queryset, POSTS_PER_PAGE)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -34,9 +33,10 @@ def paginate(queryset, request):
 
 
 def annotate_comment_count(queryset):
-    '''Adds annotations about the number of comments to the post.'''
-
-    return queryset.annotate(comment_count=Count('comments')).order_by(
+    """Adds annotations about the number of comments to the post."""
+    return queryset.annotate(
+        comment_count=Count(
+            'comments')).order_by(
                 '-pub_date')
 
 
