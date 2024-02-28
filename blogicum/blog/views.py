@@ -98,9 +98,7 @@ class PostDetailView(DetailView):
 
     def dispatch(self, request, *args, **kwargs):
         instance = get_object_or_404(Post, pk=kwargs['post_id'])
-        if instance.author == request.user:
-            pass
-        elif instance.is_published is False:
+        if instance.author != request.user and instance.is_published is False:
             raise Http404
         return super().dispatch(request, *args, **kwargs)
 
