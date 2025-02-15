@@ -17,18 +17,23 @@
    git clone https://github.com/pullveryzator/django_sprint4.git
    cd django_sprint4
 2. **Создайте и активируйте виртуальное окружение**:
+   ```bash
    python -m venv venv
    source venv/bin/activate  # Для Linux/MacOS
    venv\Scripts\activate     # Для Windows
-3. **Установите зависимости**:
+4. **Установите зависимости**:
+   ```bash
    pip install -r requirements.txt
-4. **Примените миграции**:
+6. **Примените миграции**:
+   ```bash
    python manage.py migrate
-5. **Создайте суперпользователя**:
+8. **Создайте суперпользователя**:
+   ```bash
    python manage.py createsuperuser
-6. **Запустите сервер**:
+10. **Запустите сервер**:
+    ```bash
    python manage.py runserver
-7. **Откройте браузер и перейдите по адресу**:
+12. **Откройте браузер и перейдите по адресу**:```bash
    http://127.0.0.1:8000/
 
 ## Тестирование
