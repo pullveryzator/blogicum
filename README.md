@@ -21,19 +21,19 @@
    python -m venv venv
    source venv/bin/activate  # Для Linux/MacOS
    venv\Scripts\activate     # Для Windows
-4. **Установите зависимости**:
+3. **Установите зависимости**:
    ```bash
    pip install -r requirements.txt
-6. **Примените миграции**:
+4. **Примените миграции**:
    ```bash
    python manage.py migrate
-8. **Создайте суперпользователя**:
+5. **Создайте суперпользователя**:
    ```bash
    python manage.py createsuperuser
-10. **Запустите сервер**:
+6. **Запустите сервер**:
     ```bash
    python manage.py runserver
-12. **Откройте браузер и перейдите по адресу**:
+7. **Откройте браузер и перейдите по адресу**:
     ```bash
    http://127.0.0.1:8000/
 
